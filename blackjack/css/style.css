@@ -9,6 +9,28 @@
 img{
   width: 200px;
 }
+body{
+  position: relative;
+  background-image: url('img/tableTop.jpg');
+  background-size: cover;
+  background-repeat: no-repeat;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  color: yellow;
+}
+button{
+  padding: 10px
+
+}
+.hit{
+  margin: auto 20px;
+}
+.buttons{
+  padding-top: 40px;
+}
+
 /******************************************
 /* LAYOUT
 /*******************************************/
