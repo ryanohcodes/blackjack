@@ -24,6 +24,10 @@ button{
   padding: 10px
 
 }
+
+.hidden{
+  display: none;
+}
 .hit{
   margin: auto 20px;
 }

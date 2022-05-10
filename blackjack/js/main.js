@@ -7,6 +7,9 @@ class BlackJack{
     this.playerCardsImage = []
     this.dealerCardsValue = []
     this.dealerCardsImage = []
+    this.nya = ['css/img/4765327.jpg']
+    this.splitHand = [];
+    this.splitHandImage = [];
     this.playerTotal = 0;
     this.dealerTotal = 0;
   }
@@ -47,11 +50,13 @@ class BlackJack{
       while(dealer.firstChild){
         dealer.removeChild(dealer.firstChild)
       }
+      document.querySelector('.split').classList.add('hidden')
       document.querySelector('h1').textContent = ''
        this.playerCardsValue = []
        this.playerCardsImage = []
        this.dealerCardsValue = []
        this.dealerCardsImage = []
+       this.splitHand = []
        this.dealerTotal = 0
        this.playerTotal = 0
     }
@@ -89,14 +94,21 @@ class BlackJack{
       .then(data=>{
         for(let number in data.cards){
           
-          if(number %2 === 0){
+          if(number %2 === 1){
             this.dealerCardsImage.push(data.cards[number].image)
             this.dealerCardsValue.push(this.convert(data.cards[number].value))
             const img = document.createElement('img')
             img.src = data.cards[number].image
-            dealer.appendChild(img)
+            if(number == 1) dealer.appendChild(img)
+            if(number == 3) {
+              const img = document.createElement('img')
+              img.classList.add('nya')
+              img.src = this.nya[0]
+              dealer.appendChild(img)
+            }
           }else {
             this.playerCardsImage.push(data.cards[number].image)
+            this.splitHand.push(data.cards[number].value)
             this.playerCardsValue.push(this.convert(data.cards[number].value))
             const img = document.createElement('img')
             img.src = data.cards[number].image
@@ -105,15 +117,35 @@ class BlackJack{
         }
         this.cardsInDeck = data.remaining;
         this.handUpdate()
-        if(this.playerTotal=== 21) document.querySelector('h1').textContent = 'BLACKJACK!!!'
-        if(this.dealerTotal=== 21) document.querySelector('h1').textContent = 'YOU LOSE'
-        if(this.playerTotal ===21 && this.dealerTotal === 21) document.querySelector('h1').textContent = 'That sucks lol'
+        this.checkSplit()
+        if(this.playerTotal=== 21) {
+          document.querySelector('h1').textContent = 'BLACKJACK!!!'
+          this.revealCard()
+        }
+        if(this.dealerTotal=== 21) {
+          document.querySelector('h1').textContent = 'YOU LOSE'
+          this.revealCard()
+        }
+        
+        if(this.playerTotal ===21 && this.dealerTotal === 21) {
+          document.querySelector('h1').textContent = 'That sucks lol'
+          this.revealCard()
+        }
+        
       })
       .catch(err=>{
         console.log(`error ${err}`)
       })
   }
-
+  checkSplit(){
+    if(this.splitHand[0] === this.splitHand[1]){
+      document.querySelector('.split').classList.remove('hidden')
+    }
+  }
+  split(){
+    this.playerCardsValue = this.playerCardsValue[0]
+    this.splitHand = this.playerCardsValue[0]
+  }
   hit(){
     if(this.playerCardsValue.length === 0) return
     if(document.querySelector('h1').textContent != '') return
@@ -138,8 +170,10 @@ class BlackJack{
   playerBust(){
     this.aceLogic();
     if(this.playerTotal > 21) {
+      this.revealCard()
       return document.querySelector('h1').textContent = 'YOU LOSE'
     } else if(this.playerTotal === 21) {
+      this.revealCard()
       return document.querySelector('h1').textContent = 'YOU WIN'
     }
   }
@@ -168,9 +202,15 @@ class BlackJack{
       this.end()
     }
   }
+  revealCard(){
+    document.querySelector('.nya').classList.add('hidden')
+    img.src = this.dealerCardsImage[1]
+    dealer.appendChild(img)
+  }
   end(){
     if(this.playerCardsValue.length === 0) return
     if(document.querySelector('h1').textContent != '') return
+    this.revealCard()
     if (this.dealerTotal >= 17){
       this.dealerBust()
       return
@@ -196,7 +236,6 @@ class BlackJack{
 
   }
 }
-
 const firstDeck = new BlackJack(1)
 
 const dealer= document.getElementById('dealer')
