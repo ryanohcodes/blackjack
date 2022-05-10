@@ -1,197 +1,261 @@
-let id = ''
-let cardsInDeck = 0;
-let playerCardsValue = []
-let playerCardsImage = []
-let dealerCardsValue = []
-let dealerCardsImage = []
-let playerTotal = 0;
-let dealerTotal = 0;
-const dealer= document.getElementById('dealer')
-const img = document.createElement('img')
-const player= document.getElementById('player')
-const imgs= document.querySelector('img')
-
-function aceLogic(){
-  playerTotal = playerCardsValue.reduce((sum,x) => sum +x,0)
-  dealerTotal = dealerCardsValue.reduce((sum,x) => sum +x,0)
-  if(playerCardsValue.includes(11) && playerTotal > 21){
-    playerCardsValue.splice(playerCardsValue.indexOf(11),1,1)
+class BlackJack{
+  constructor(numberOfDecks){
+    this.numberOfDecks = numberOfDecks
+    this.id = ''
+    this.cardsInDeck = 0
+    this.playerCardsValue = []
+    this.playerCardsImage = []
+    this.dealerCardsValue = []
+    this.dealerCardsImage = []
+    this.nya = ['css/img/4765327.jpg']
+    this.splitHand = [];
+    this.splitHandImage = [];
+    this.playerTotal = 0;
+    this.dealerTotal = 0;
   }
-  if(dealerCardsValue.includes(11) && dealerTotal > 21){
-    dealerCardsValue.splice(dealerCardsValue.indexOf(11),1,1)
-  }
-};
-function newDeck(){
-  if(cardsInDeck < 15){
-    fetch('https://deckofcardsapi.com/api/deck/new/shuffle/?deck_count=1')
-        .then(res=>res.json())
-        .then(data=>{
-          console.log(data)
-          id = (data.deck_id);
-          cardsInDeck = data.remaining;
-        })
-        .catch(err=>{
-          console.log(`error ${err}`)
-        })
-  }
-}
-fetch('https://deckofcardsapi.com/api/deck/new/shuffle/?deck_count=1')
-  .then(res=>res.json())
-  .then(data=>{
-    console.log(data)
-    console.log(data.remaining)
-    id = (data.deck_id);
-    cardsInDeck = data.remaining;
-  })
-  .catch(err=>{
-    console.log(`error ${err}`)
-  })
-function reset(){
-  if(document.querySelector('h1').textContent != false) {
-    while(player.firstChild){
-      player.removeChild(player.firstChild)
-    }
-    while(dealer.firstChild){
-      dealer.removeChild(dealer.firstChild)
-    }
-    document.querySelector('h1').textContent = ''
-     playerCardsValue = []
-     playerCardsImage = []
-     dealerCardsValue = []
-     dealerCardsImage = []
-     dealerTotal = 0
-     playerTotal = 0
-  }
-}
-  document.querySelector('.start').addEventListener('click', draw)
-  document.querySelector('.hit').addEventListener('click', hit)
-  document.querySelector('.end').addEventListener('click', end)
-
-  function draw(){
-    reset();
-    newDeck();
-    if(playerCardsValue.length > 0) return
-
-    fetch(`https://deckofcardsapi.com/api/deck/${id}/draw/?count=4`)
+  // gets the number of decks, id, and cards remaining
+  startGame(){
+    if(this.id == false){
+      fetch('https://deckofcardsapi.com/api/deck/new/shuffle/?deck_count=1')
       .then(res=>res.json())
       .then(data=>{
-        console.log(data)
-        for(let number in data.cards){
-          
-          if(number %2 === 0){
-            dealerCardsImage.push(data.cards[number].image)
-            dealerCardsValue.push(convert(data.cards[number].value))
-            const img = document.createElement('img')
-            img.src = data.cards[number].image
-            dealer.appendChild(img)
-          }else {
-            playerCardsImage.push(data.cards[number].image)
-            playerCardsValue.push(convert(data.cards[number].value))
-            const img = document.createElement('img')
-            img.src = data.cards[number].image
-            player.appendChild(img)
-          }
-        }
-        cardsInDeck = data.remaining;
-        playerTotal = playerCardsValue.reduce((sum,x) => sum +x,0)
-        dealerTotal = dealerCardsValue.reduce((sum,x) => sum +x,0)
-        if(playerTotal=== 21) document.querySelector('h1').textContent = 'BLACKJACK'
-        if(dealerTotal=== 21) document.querySelector('h1').textContent = 'YOU LOSE'
-        if(playerTotal ===21 && dealerTotal === 21) document.querySelector('h1').textContent = 'That sucks lol'
+        this.id = data.deck_id
+        this.cardsInDeck = data.remaining;
+        this.deal()
       })
       .catch(err=>{
         console.log(`error ${err}`)
       })
+    }
+    else{
+      this.deal()
+    }
   }
-
-  function hit(){
-    if(playerCardsValue.length === 0) return
-    fetch(`https://deckofcardsapi.com/api/deck/${id}/draw/?count=1`)
-    .then(res=>res.json())
-    .then(data=>{
-      console.log(data)
-      for(let number in data.cards){
-          playerCardsImage.push(data.cards[number].image)
-          playerCardsValue.push(convert(data.cards[number].value))
-          const img = document.createElement('img')
-          img.src = data.cards[number].image
-          player.appendChild(img)
-      }
-      cardsInDeck = data.remaining;
-      playerBust();
-    })
-    .catch(err=>{
-      console.log(`error ${err}`)
-    })
+  handUpdate(){
+    this.playerTotal = this.playerCardsValue.reduce((sum,x) => sum + x,0)
+    this.dealerTotal = this.dealerCardsValue.reduce((sum,x) => sum +x,0)
   }
-
-  function convert(card){
+  convert(card){
     if (card === 'KING') return 10
     else if (card === 'QUEEN') return 10
     else if (card === 'JACK') return 10
     else if (card === 'ACE') return 11
     else return Number(card)
   }
+  reset(){
+    if(document.querySelector('h1').textContent != false) {
+      while(player.firstChild){
+        player.removeChild(player.firstChild)
+      }
+      while(dealer.firstChild){
+        dealer.removeChild(dealer.firstChild)
+      }
+      document.querySelector('.split').classList.add('hidden')
+      document.querySelector('h1').textContent = ''
+       this.playerCardsValue = []
+       this.playerCardsImage = []
+       this.dealerCardsValue = []
+       this.dealerCardsImage = []
+       this.splitHand = []
+       this.dealerTotal = 0
+       this.playerTotal = 0
+    }
+  }
+  aceLogic(){
+    this.handUpdate()
+    if(this.playerCardsValue.includes(11) && this.playerTotal > 21){
+      this.playerCardsValue.splice(this.playerCardsValue.indexOf(11),1,1)
+    }
+    if(this.dealerCardsValue.includes(11) && this.dealerTotal > 21){
+      this.dealerCardsValue.splice(this.dealerCardsValue.indexOf(11),1,1)
+    }
+    this.handUpdate()
+  }
+  newDeck(){
+    if(this.cardsInDeck < 15){
+      fetch('https://deckofcardsapi.com/api/deck/new/shuffle/?deck_count=1')
+          .then(res=>res.json())
+          .then(data=>{
+            this.id = (data.deck_id);
+            this.cardsInDeck = data.remaining;
+          })
+          .catch(err=>{
+            console.log(`error ${err}`)
+          })
+    }
+  }
+  deal(){
+    this.reset();
+    this.newDeck();
+    if(this.playerCardsValue.length > 0) return
 
-  function playerBust(){
-    aceLogic();
-    playerTotal = playerCardsValue.reduce((sum,x) => sum +x,0)
-    if(playerTotal > 21) {
-      return document.querySelector('h1').textContent = 'YOU LOSE'
-    }
-    
-    if(playerTotal === 21) {
-      return document.querySelector('h1').textContent = 'YOU WIN'
+    fetch(`https://deckofcardsapi.com/api/deck/${this.id}/draw/?count=4`)
+      .then(res=>res.json())
+      .then(data=>{
+        for(let number in data.cards){
+          
+          if(number %2 === 1){
+            this.dealerCardsImage.push(data.cards[number].image)
+            this.dealerCardsValue.push(this.convert(data.cards[number].value))
+            const img = document.createElement('img')
+            img.src = data.cards[number].image
+            if(number == 1) dealer.appendChild(img)
+            if(number == 3) {
+              const img = document.createElement('img')
+              img.classList.add('nya')
+              img.src = this.nya[0]
+              dealer.appendChild(img)
+            }
+          }else {
+            this.playerCardsImage.push(data.cards[number].image)
+            this.splitHand.push(data.cards[number].value)
+            this.playerCardsValue.push(this.convert(data.cards[number].value))
+            const img = document.createElement('img')
+            img.src = data.cards[number].image
+            player.appendChild(img)
+          }
+        }
+        this.cardsInDeck = data.remaining;
+        this.handUpdate()
+        this.checkSplit()
+        if(this.playerTotal=== 21) {
+          document.querySelector('h1').textContent = 'BLACKJACK!!!'
+          this.revealCard()
+        }
+        if(this.dealerTotal=== 21) {
+          document.querySelector('h1').textContent = 'YOU LOSE'
+          this.revealCard()
+        }
+        
+        if(this.playerTotal ===21 && this.dealerTotal === 21) {
+          document.querySelector('h1').textContent = 'That sucks lol'
+          this.revealCard()
+        }
+        
+      })
+      .catch(err=>{
+        console.log(`error ${err}`)
+      })
+  }
+  checkSplit(){
+    if(this.splitHand[0] === this.splitHand[1]){
+      document.querySelector('.split').classList.remove('hidden')
     }
   }
-  function dealerBust(){
-    aceLogic();
-    dealerTotal = dealerCardsValue.reduce((sum,x) => sum +x,0)
-    if(dealerTotal > 21) {
-      document.querySelector('h1').textContent = 'YOU WIN'
-      return
-    }
-    else if (dealerTotal === 21) {
-      document.querySelector('h1').textContent = 'YOU LOSE'
-      return
-    }
-    if (dealerTotal === playerTotal) {
-      document.querySelector('h1').textContent = 'PUSH'
-      return
-    }
-    if(dealerTotal >= 17){
-      if(playerTotal > dealerTotal){
-        document.querySelector('h1').textContent = 'YOU WIN'
-        return
-      }else {
-        document.querySelector('h1').textContent = 'YOU LOSE'
-        return
-    } 
-   }
+  split(){
+    this.playerCardsValue = this.playerCardsValue[0]
+    this.splitHand = this.playerCardsValue[0]
   }
-  function end(){
-    if(playerCardsValue.length === 0) return
-    if (dealerTotal >= 17){
-      dealerBust()
-      return
-    }
-    
-    fetch(`https://deckofcardsapi.com/api/deck/${id}/draw/?count=1`)
+  hit(){
+    if(this.playerCardsValue.length === 0) return
+    if(document.querySelector('h1').textContent != '') return
+    fetch(`https://deckofcardsapi.com/api/deck/${this.id}/draw/?count=1`)
     .then(res=>res.json())
     .then(data=>{
-      console.log(data)
       for(let number in data.cards){
-        dealerCardsImage.push(data.cards[number].image)
-        dealerCardsValue.push(convert(data.cards[number].value))
-        const dealer= document.getElementById('dealer')
-        const img = document.createElement('img')
-        img.src = data.cards[number].image
-        dealer.appendChild(img)
+          this.playerCardsImage.push(data.cards[number].image)
+          this.playerCardsValue.push(this.convert(data.cards[number].value))
+          const img = document.createElement('img')
+          img.src = data.cards[number].image
+          player.appendChild(img)
       }
-      cardsInDeck = data.remaining;
-      dealerBust();
+      this.cardsInDeck = data.remaining;
+      this.playerBust();
     })
     .catch(err=>{
       console.log(`error ${err}`)
     })
   }
+
+  playerBust(){
+    this.aceLogic();
+    if(this.playerTotal > 21) {
+      this.revealCard()
+      return document.querySelector('h1').textContent = 'YOU LOSE'
+    } else if(this.playerTotal === 21) {
+      this.revealCard()
+      return document.querySelector('h1').textContent = 'YOU WIN'
+    }
+  }
+  dealerBust(){
+    this.aceLogic();
+    if(this.dealerTotal > 21) {
+      document.querySelector('h1').textContent = 'YOU WIN'
+      return
+    }
+    else if (this.dealerTotal === 21) {
+      document.querySelector('h1').textContent = 'YOU LOSE'
+      return
+    }
+    if(this.dealerTotal >= 17){
+      if(this.playerTotal > this.dealerTotal){
+        document.querySelector('h1').textContent = 'YOU WIN'
+        return
+      }else if(this.dealerTotal === this.playerTotal){
+        document.querySelector('h1').textContent = 'PUSH'
+        return
+      }else {
+        document.querySelector('h1').textContent = 'YOU LOSE'
+        return
+      } 
+    }else{
+      this.end()
+    }
+  }
+  revealCard(){
+    document.querySelector('.nya').classList.add('hidden')
+    img.src = this.dealerCardsImage[1]
+    dealer.appendChild(img)
+  }
+  end(){
+    if(this.playerCardsValue.length === 0) return
+    if(document.querySelector('h1').textContent != '') return
+    this.revealCard()
+    if (this.dealerTotal >= 17){
+      this.dealerBust()
+      return
+    }
+      fetch(`https://deckofcardsapi.com/api/deck/${this.id}/draw/?count=1`)
+      .then(res=>res.json())
+      .then(data=>{
+        for(let number in data.cards){
+          this.dealerCardsImage.push(data.cards[number].image)
+          this.dealerCardsValue.push(this.convert(data.cards[number].value))
+          const dealer= document.getElementById('dealer')
+          const img = document.createElement('img')
+          img.src = data.cards[number].image
+          dealer.appendChild(img)
+        }
+        this.cardsInDeck = data.remaining;
+        this.dealerBust();
+      })
+      .catch(err=>{
+        console.log(`error ${err}`)
+      })
+    
+
+  }
+}
+const firstDeck = new BlackJack(1)
+
+const dealer= document.getElementById('dealer')
+const img = document.createElement('img')
+const player= document.getElementById('player')
+const imgs= document.querySelector('img')
+const startButton = document.querySelector('.start')
+const hitButton = document.querySelector('.hit')
+const endButton = document.querySelector('.end')
+
+startButton.addEventListener('click', ()=>{
+  firstDeck.startGame()
+})
+
+hitButton.addEventListener('click', ()=>{
+  firstDeck.hit()
+})
+
+endButton.addEventListener('click',()=>{
+  firstDeck.end()
+})
+
+
